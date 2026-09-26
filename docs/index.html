@@ -2,83 +2,69 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clasificador Teachable Machine</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 30px;
-        }
-        #webcam-container {
-            margin: 15px auto;
-        }
-        #label-container div {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin: 5px 0;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-    </style>
+    <title>Clasificador por Archivo</title>
 </head>
 <body>
 
     <h2>Clasificador de Imágenes (Carro / Moto)</h2>
-    <button type="button" onclick="init()">Iniciar Cámara</button>
-    <div id="webcam-container"></div>
+
+    <!-- Cargar imagen desde la computadora -->
+    <input type="file" id="image-upload" accept="image/*" onchange="predictImage(event)">
+    <br><br>
+
+    <!-- Vista previa de la imagen cargada -->
+    <img id="image-preview" width="200" alt="Vista previa de la imagen" style="display:none;">
+    
+    <!-- Contenedor para los resultados -->
     <div id="label-container"></div>
 
-    <!-- Carga de librerías TensorFlow.js y Teachable Machine -->
+    <!-- Librerías de TensorFlow.js y Teachable Machine -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
     <script type="text/javascript">
         const URL = "https://teachablemachine.withgoogle.com/models/XidxdWcOJ/";
+        let model, labelContainer, maxPredictions;
 
-        let model, webcam, labelContainer, maxPredictions;
-
-        async function init() {
+        // Carga el modelo al abrir la página
+        async function loadModel() {
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
-
-            // Carga el modelo y los metadatos desde la CDN de Google
             model = await tmImage.load(modelURL, metadataURL);
             maxPredictions = model.getTotalClasses();
 
-            // Configuración de la webcam
-            const flip = true; 
-            webcam = new tmImage.Webcam(200, 200, flip);
-            await webcam.setup(); 
-            await webcam.play();
-            window.requestAnimationFrame(loop);
-
-            // Añadir elementos al DOM
-            document.getElementById("webcam-container").appendChild(webcam.canvas);
             labelContainer = document.getElementById("label-container");
-            labelContainer.innerHTML = ""; // Limpiar antes de agregar
+            labelContainer.innerHTML = "";
             for (let i = 0; i < maxPredictions; i++) {
                 labelContainer.appendChild(document.createElement("div"));
             }
         }
 
-        async function loop() {
-            webcam.update();
-            await predict();
-            window.requestAnimationFrame(loop);
+        // Procesa la imagen seleccionada y realiza la predicción
+        async function predictImage(event) {
+            if (!model) await loadModel();
+
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const imgElement = document.getElementById("image-preview");
+            imgElement.src = URL.createObjectURL(file);
+            imgElement.style.display = "block";
+
+            // Esperar a que la imagen se cargue en el DOM para procesarla
+            imgElement.onload = async () => {
+                const prediction = await model.predict(imgElement);
+                for (let i = 0; i < maxPredictions; i++) {
+                    const classPrediction =
+                        prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(1) + "%";
+                    labelContainer.childNodes[i].innerHTML = classPrediction;
+                }
+            };
         }
 
-        async function predict() {
-            const prediction = await model.predict(webcam.canvas);
-            for (let i = 0; i < maxPredictions; i++) {
-                const classPrediction =
-                    prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(1) + "%";
-                labelContainer.childNodes[i].innerHTML = classPrediction;
-            }
-        }
+        // Cargar el modelo al iniciar
+        loadModel();
     </script>
+
 </body>
 </html>
