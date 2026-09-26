@@ -3,216 +3,465 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clasificador de Carros y Motos</title>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #141824;
-            color: white;
-            min-height: 100vh;
             margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: #101827;
+            color: #ffffff;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
+            padding: 24px;
         }
 
         .container {
-            background: #222839;
+            width: 100%;
+            max-width: 550px;
+            background: #1e293b;
+            border-radius: 18px;
             padding: 35px;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 480px;
             text-align: center;
-            box-shadow: 0 8px 30px #0005;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
         }
 
         h1 {
-            font-size: 25px;
-            margin-bottom: 10px;
+            font-size: 27px;
+            margin: 0 0 12px;
         }
 
-        p {
-            color: #bfc6d5;
+        .description {
+            color: #cbd5e1;
+            font-size: 15px;
+            margin-bottom: 28px;
+        }
+
+        .upload-box {
+            border: 2px dashed #64748b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
         }
 
         input[type="file"] {
-            margin: 25px 0;
             width: 100%;
-            max-width: 300px;
+            max-width: 350px;
+            color: white;
+            font-size: 14px;
+        }
+
+        input::file-selector-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 11px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 12px;
+        }
+
+        input::file-selector-button:hover {
+            background: #1d4ed8;
         }
 
         #image-preview {
             display: none;
-            max-width: 100%;
+            width: 100%;
+            max-width: 350px;
             max-height: 300px;
-            margin: 15px auto;
-            border-radius: 10px;
             object-fit: contain;
-        }
-
-        .result {
-            background: #30384b;
-            padding: 14px;
-            margin-top: 12px;
-            border-radius: 8px;
-            text-align: left;
-        }
-
-        .bar {
-            background: #151a27;
-            border-radius: 10px;
-            height: 12px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-
-        .fill {
-            background: #48c78e;
-            height: 100%;
-            transition: width 0.3s;
+            border-radius: 12px;
+            margin: 20px auto;
+            background: #0f172a;
         }
 
         #status {
-            margin-top: 15px;
+            font-size: 14px;
+            color: #93c5fd;
+            margin: 20px 0;
+        }
+
+        .results-title {
+            font-size: 20px;
+            margin-top: 25px;
+            margin-bottom: 18px;
+        }
+
+        .result {
+            text-align: left;
+            background: #334155;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .progress {
+            width: 100%;
+            height: 13px;
+            background: #0f172a;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #3b82f6;
+            border-radius: 20px;
+            transition: width 0.4s;
+        }
+
+        .winner {
+            background: #14532d;
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .note {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-top: 22px;
         }
     </style>
 </head>
 
 <body>
 
-<div class="container">
+    <main class="container">
 
-    <h1>Clasificador de Imágenes</h1>
+        <h1>Clasificador de Imágenes</h1>
 
-    <p>Inteligencia Artificial para reconocer carros y motos</p>
+        <p class="description">
+            Inteligencia Artificial para reconocer carros y motos
+        </p>
 
-    <input
-        type="file"
-        id="image-upload"
-        accept="image/*"
-        disabled
-    >
+        <div class="upload-box">
+            <p>Selecciona una imagen desde tu computadora</p>
 
-    <img id="image-preview" alt="Imagen seleccionada">
+            <input
+                type="file"
+                id="image-upload"
+                accept="image/*"
+            >
+        </div>
 
-    <p id="status">Cargando modelo de IA...</p>
+        <!-- Vista previa -->
+        <img
+            id="image-preview"
+            alt="Vista previa de la imagen seleccionada"
+        >
 
-    <div id="label-container"></div>
+        <!-- Estado de la IA -->
+        <p id="status">Cargando modelo de inteligencia artificial...</p>
 
-</div>
+        <!-- Resultados -->
+        <div id="label-container"></div>
 
-<!-- TensorFlow.js -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+        <p class="note">
+            Modelo desarrollado con Google Teachable Machine.
+        </p>
 
-<!-- Teachable Machine -->
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    </main>
 
-<script>
-    // Dirección de tu modelo entrenado
-    const MODEL_URL =
-        "https://teachablemachine.withgoogle.com/models/XidxdWcOJ/";
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 
-    let model = null;
+    <!-- Teachable Machine -->
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
-    const upload = document.getElementById("image-upload");
-    const preview = document.getElementById("image-preview");
-    const container = document.getElementById("label-container");
-    const status = document.getElementById("status");
+    <script>
 
-    // Cargar el modelo
-    async function loadModel() {
-        try {
-            model = await tmImage.load(
-                MODEL_URL + "model.json",
-                MODEL_URL + "metadata.json"
-            );
+        // MODELO DE INTELIGENCIA ARTIFICIAL
+        // Los archivos deben estar junto a index.html.
 
-            status.textContent = "Modelo cargado. Selecciona una imagen.";
-            upload.disabled = false;
+        const MODEL_URL = "./";
 
-        } catch (error) {
-            console.error("Error al cargar el modelo:", error);
-            status.textContent =
-                "No se pudo cargar el modelo. Revisa la conexión y la consola.";
+        let model = null;
+        let modelPromise = null;
+        let requestNumber = 0;
+
+        const imageUpload =
+            document.getElementById("image-upload");
+
+        const imagePreview =
+            document.getElementById("image-preview");
+
+        const labelContainer =
+            document.getElementById("label-container");
+
+        const status =
+            document.getElementById("status");
+
+
+        // 1. CARGAR EL MODELO
+
+        async function loadModel() {
+
+            try {
+
+                if (typeof tmImage === "undefined") {
+                    throw new Error(
+                        "No se cargó la librería de Teachable Machine."
+                    );
+                }
+
+                const modelURL = MODEL_URL + "model.json";
+
+                const metadataURL =
+                    MODEL_URL + "metadata.json";
+
+                model = await tmImage.load(
+                    modelURL,
+                    metadataURL
+                );
+
+                status.textContent =
+                    "Modelo cargado. Selecciona una imagen.";
+
+                console.log(
+                    "Modelo cargado correctamente."
+                );
+
+                return model;
+
+            } catch (error) {
+
+                console.error(
+                    "Error al cargar el modelo:",
+                    error
+                );
+
+                status.textContent =
+                    "Error al cargar el modelo. " +
+                    "Comprueba los archivos y revisa la consola.";
+
+                throw error;
+            }
         }
-    }
 
-    // Clasificar la imagen seleccionada
-    upload.addEventListener("change", async function(event) {
-        const file = event.target.files[0];
 
-        if (!file || !model) return;
+        // 2. SELECCIONAR LA IMAGEN
 
-        container.innerHTML = "";
-        status.textContent = "Analizando imagen...";
+        imageUpload.addEventListener(
+            "change",
+            async function(event) {
 
-        const imageURL = window.URL.createObjectURL(file);
+                const file = event.target.files[0];
 
-        try {
-            preview.onload = async function() {
+                if (!file) {
+                    return;
+                }
+
+                const currentRequest = ++requestNumber;
+
+                labelContainer.innerHTML = "";
+
+                status.textContent =
+                    "Cargando imagen...";
+
+                // Crear una dirección temporal.
+                const imageURL =
+                    window.URL.createObjectURL(file);
+
                 try {
-                    const predictions = await model.predict(preview);
 
-                    predictions.sort(
-                        (a, b) => b.probability - a.probability
+                    // Esperar a que la imagen cargue.
+                    const imageLoaded = new Promise(
+                        (resolve, reject) => {
+
+                            imagePreview.onload = resolve;
+
+                            imagePreview.onerror = () => {
+                                reject(
+                                    new Error(
+                                        "No se pudo abrir la imagen."
+                                    )
+                                );
+                            };
+
+                            imagePreview.src = imageURL;
+                        }
                     );
 
-                    container.innerHTML = "";
+                    imagePreview.style.display = "block";
 
-                    predictions.forEach(prediction => {
-                        const percentage =
-                            (prediction.probability * 100).toFixed(1);
+                    await imageLoaded;
 
-                        const result = document.createElement("div");
-                        result.className = "result";
+                    if (currentRequest !== requestNumber) {
+                        return;
+                    }
 
-                        const name = document.createElement("strong");
-                        name.textContent =
-                            prediction.className + ": " + percentage + "%";
+                    status.textContent =
+                        "Imagen cargada. Analizando...";
 
-                        const bar = document.createElement("div");
-                        bar.className = "bar";
+                    // Esperar al modelo.
+                    const loadedModel = await modelPromise;
 
-                        const fill = document.createElement("div");
-                        fill.className = "fill";
-                        fill.style.width = percentage + "%";
+                    if (currentRequest !== requestNumber) {
+                        return;
+                    }
 
-                        bar.appendChild(fill);
-                        result.appendChild(name);
-                        result.appendChild(bar);
-                        container.appendChild(result);
-                    });
+                    // Realizar la predicción.
+                    const predictions =
+                        await loadedModel.predict(imagePreview);
 
-                    status.textContent = "Análisis completado.";
+                    if (currentRequest !== requestNumber) {
+                        return;
+                    }
+
+                    showResults(predictions);
 
                 } catch (error) {
+
                     console.error(error);
-                    status.textContent = "Error al analizar la imagen.";
+
+                    if (currentRequest === requestNumber) {
+                        status.textContent =
+                            "Ocurrió un error: " + error.message;
+                    }
+
                 } finally {
+
                     window.URL.revokeObjectURL(imageURL);
+
                 }
-            };
+            }
+        );
 
-            preview.onerror = function() {
-                status.textContent = "No se pudo abrir la imagen.";
-                window.URL.revokeObjectURL(imageURL);
-            };
 
-            preview.style.display = "block";
-            preview.src = imageURL;
+        // 3. MOSTRAR RESULTADOS
 
-        } catch (error) {
-            console.error(error);
-            status.textContent = "Error al procesar el archivo.";
-            window.URL.revokeObjectURL(imageURL);
+        function showResults(predictions) {
+
+            labelContainer.innerHTML = "";
+
+            // Ordenar de mayor a menor probabilidad.
+            predictions.sort(
+                (a, b) => b.probability - a.probability
+            );
+
+            const title =
+                document.createElement("h2");
+
+            title.className = "results-title";
+
+            title.textContent =
+                "Resultados de la clasificación";
+
+            labelContainer.appendChild(title);
+
+
+            predictions.forEach(prediction => {
+
+                const percentage =
+                    (prediction.probability * 100).toFixed(1);
+
+                // Contenedor del resultado.
+                const result =
+                    document.createElement("div");
+
+                result.className = "result";
+
+
+                // Nombre y porcentaje.
+                const header =
+                    document.createElement("div");
+
+                header.className = "result-header";
+
+
+                const name =
+                    document.createElement("span");
+
+                name.textContent =
+                    prediction.className;
+
+
+                const value =
+                    document.createElement("span");
+
+                value.textContent =
+                    percentage + "%";
+
+
+                header.appendChild(name);
+                header.appendChild(value);
+
+
+                // Barra de porcentaje.
+                const progress =
+                    document.createElement("div");
+
+                progress.className = "progress";
+
+
+                const fill =
+                    document.createElement("div");
+
+                fill.className = "progress-fill";
+
+                fill.style.width =
+                    percentage + "%";
+
+
+                progress.appendChild(fill);
+
+                result.appendChild(header);
+                result.appendChild(progress);
+
+                labelContainer.appendChild(result);
+
+            });
+
+
+            // Mostrar la clase con mayor probabilidad.
+            const winner =
+                document.createElement("div");
+
+            winner.className = "winner";
+
+            winner.textContent =
+                "Predicción principal: " +
+                predictions[0].className +
+                " (" +
+                (predictions[0].probability * 100).toFixed(1) +
+                "%)";
+
+            labelContainer.appendChild(winner);
+
+            status.textContent =
+                "Clasificación completada.";
+
         }
-    });
 
-    // Iniciar la carga del modelo
-    loadModel();
-</script>
+
+        // 4. INICIAR LA INTELIGENCIA ARTIFICIAL
+
+        modelPromise = loadModel();
+
+        // Evitar errores sin gestionar si falla
+        // antes de seleccionar una imagen.
+        modelPromise.catch(() => {});
+
+    </script>
 
 </body>
 </html>
